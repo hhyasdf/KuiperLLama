@@ -29,6 +29,8 @@ void rmsnorm_kernel_cpu(const tensor::Tensor& input, const tensor::Tensor& weigh
 
   const float mean = arma::as_scalar(arma::mean(arma::pow(in_tensor, 2))) + eps;
   const float rsqrt = 1.f / std::sqrt(mean);
+
+  // 这个地方的 % 被重载了，就是元素级别的乘法，两个 vec 对应位置的元素相乘
   out_tensor = wei_tensor % (rsqrt * in_tensor);
 }
 }  // namespace kernel

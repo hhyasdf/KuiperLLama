@@ -9,6 +9,7 @@
 #include "base/buffer.h"
 namespace tensor {
 
+// 自己定义了 Tensor 类，没有使用 torch 的 tensor
 class Tensor {
  public:
   explicit Tensor() = default;

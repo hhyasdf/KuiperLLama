@@ -57,6 +57,7 @@ base::Status Layer::check_tensor(const tensor::Tensor& tensor, base::DeviceType 
 base::Status Layer::check_tensor_with_dim(const tensor::Tensor& tensor,
                                           base::DeviceType device_type, base::DataType data_type,
                                           ...) const {
+  // va_list 是 C/C++ 用来处理可变参数的内置类型。
   std::va_list args;
   if (tensor.is_empty()) {
     return base::error::InvalidArgument("The tensor parameter is empty.");
@@ -68,14 +69,17 @@ base::Status Layer::check_tensor_with_dim(const tensor::Tensor& tensor,
     return base::error::InvalidArgument("The tensor has a wrong data type.");
   }
 
+  // va_start 表示从 data_type 后面开始读“可变参数”。
   va_start(args, data_type);
   int32_t dims = tensor.dims_size();
   for (int32_t i = 0; i < dims; ++i) {
+    // va_arg(args, int32_t) 取出下一个预期维度大小
     int32_t dim = va_arg(args, int32_t);
     if (dim != tensor.get_dim(i)) {
       return base::error::InvalidArgument("The tensor has a wrong dim in dim" + std::to_string(i));
     }
   }
+  // 释放可变参数解析资源。
   va_end(args);
   return base::error::Success();
 }

@@ -65,13 +65,13 @@ inline size_t DataTypeSize(DataType data_type) {
 
 class NoCopyable {
  protected:
-  NoCopyable() = default;
+  NoCopyable() = default;     // 删除构造函数，（因为是 protected 的方法，只有子类能够访问）只有子类能够构造
 
-  ~NoCopyable() = default;
+  ~NoCopyable() = default;    // 删除析构函数，只有子类能够析构
 
-  NoCopyable(const NoCopyable&) = delete;
+  NoCopyable(const NoCopyable&) = delete;  // 删除拷贝构造方法，只有子类能够拷贝构造
 
-  NoCopyable& operator=(const NoCopyable&) = delete;
+  NoCopyable& operator=(const NoCopyable&) = delete;  // 删除赋值操作，只有子类能够赋值
 };
 
 enum StatusCode : uint8_t {

@@ -22,6 +22,7 @@ enum class LayerType : uint8_t {
   kLayerSwiGLU = 10,
 };
 
+// 层的基类
 class BaseLayer {
  public:
   explicit BaseLayer(base::DeviceType device_type, LayerType layer_type, base::DataType data_type,
@@ -90,6 +91,7 @@ class BaseLayer {
   base::DeviceType device_type_ = base::DeviceType::kDeviceUnknown;
 };
 
+// 这个类表示 “无参数的层” 类型，加了 input、output
 class Layer : public BaseLayer {
  public:
   explicit Layer(base::DeviceType device_type, LayerType layer_type, std::string layer_name = "");
@@ -154,6 +156,7 @@ class Layer : public BaseLayer {
   std::shared_ptr<kernel::CudaConfig> cuda_config_;
 };
 
+// 这个类表示 “有参数的层” 类型，可以 set weight
 class LayerParam : public Layer {
  public:
   explicit LayerParam(base::DeviceType device_type, LayerType layer_type,
