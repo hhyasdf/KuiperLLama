@@ -68,6 +68,8 @@ static __global__ void row_rmsnorm_f32(float* in, float* wei, float* out, int si
   const int pack_off = pack_size * pack_num;
 
   float sum = 0.0f;
+
+  // 将 thread 四合一，并运用 float4 告诉 nvcc 产生 SIMD 代码
   float4* in_pack = reinterpret_cast<float4*>(in);
   for (int i = tid; i < pack_num; i += blockDim.x) {
     float4 in_float4 = *(in_pack + i);
@@ -77,10 +79,12 @@ static __global__ void row_rmsnorm_f32(float* in, float* wei, float* out, int si
     sum += in_float4.w * in_float4.w;
   }
 
+  // 这里是处理最后一个不完整的 pack，因为 size 不一定能整除 pack_size，会剩余几个元素。
   for (int i = pack_off + tid; i < size; i += blockDim.x) {
     sum += in[i] * in[i];
   }
 
+  // 这里是通过 BLOCK_DIM 来灵活传入维度的，因为 template 里面好像是要用常量
   using BlockReduce = cub::BlockReduce<float, BLOCK_DIM>;
   __shared__ typename BlockReduce::TempStorage temp;
   __shared__ float shared_val;
@@ -105,6 +109,34 @@ static __global__ void row_rmsnorm_f32(float* in, float* wei, float* out, int si
   for (int i = pack_off + tid; i < size; i += blockDim.x) {
     out[i] = wei[i] * in[i] * scale;
   }
+
+
+  // // 练手版本，实现一个最基础的
+  // const int threadGlobalIndex = blockIdx.x * blockDim.x + threadIdx.x;
+  // const int totalThreads = gridDim.x * blockDim.x;
+  // float sum = 0;
+
+  // for (int i = threadGlobalIndex; i < size; i += totalThreads) {
+  //   float in_item = in[i];
+  //   sum += in_item * in_item;
+  // }
+
+  // __shared__ float sumBuff[BLOCK_DIM];
+  // sumBuff[threadIdx.x] = sum;
+
+  // __syncthreads();
+
+  // float totalSum = 0;
+  // for (int i = 0; i < totalThreads; i++) {
+  //   totalSum += sumBuff[i];
+  // }
+
+  // const float scale = rsqrt(totalSum / static_cast<float>(size) + eps);
+  // for (int i = threadGlobalIndex; i < size; i += totalThreads) {
+  //   out[i] = scale * in[i] * wei[i];
+  //   // 用来测试 ut 是否有效，直接用 in 作为结果输出 test 会报错。
+  //   // out[i] = in[i];
+  // }
 }
 
 void rmsnorm_kernel_cu(const tensor::Tensor& input, const tensor::Tensor& weight,
